@@ -211,7 +211,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 					<img class="lazyload logo" src="./assets/images/logo/project_logo.svg"
 						data-src="./assets/images/logo/project_logo.svg" alt>
 				</a>
-				<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+				<button class="navbar-toggler" type="button"
 					aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
 					<span class="navbar-toggler-icon"></span>
 				</button>
@@ -1797,6 +1797,82 @@ body {
 			}, 3000);
 		});
 	</script>
+
+	<!-- ✅ Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const navbarToggler = document.querySelector(".navbar-toggler");
+  const navbarCollapse = document.querySelector("#navbarNav");
+  if (!navbarToggler || !navbarCollapse) return;
+
+  let isAnimating = false;
+
+  function getCollapseInstance() {
+    return bootstrap.Collapse.getInstance(navbarCollapse) ||
+           new bootstrap.Collapse(navbarCollapse, { toggle: false });
+  }
+
+  function toggleMenu() {
+    if (isAnimating) return; // prevent rapid double clicks
+    const instance = getCollapseInstance();
+    const isOpen = navbarCollapse.classList.contains("show");
+    isAnimating = true;
+
+    if (isOpen) {
+      instance.hide();
+      navbarToggler.classList.add("collapsed");
+      navbarToggler.setAttribute("aria-expanded", "false");
+    } else {
+      instance.show();
+      navbarToggler.classList.remove("collapsed");
+      navbarToggler.setAttribute("aria-expanded", "true");
+    }
+
+    setTimeout(() => { isAnimating = false; }, 400); // animation cooldown
+  }
+
+  navbarToggler.addEventListener("click", function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleMenu();
+  });
+
+  // Close when link clicked
+  document.querySelectorAll(".nav-link").forEach(link => {
+    link.addEventListener("click", function () {
+      if (window.innerWidth <= 991 && navbarCollapse.classList.contains("show")) {
+        getCollapseInstance().hide();
+        navbarToggler.classList.add("collapsed");
+        navbarToggler.setAttribute("aria-expanded", "false");
+      }
+    });
+  });
+
+  // Auto close on scroll – but skip right after click (to avoid instant close)
+  let lastClick = 0;
+  navbarToggler.addEventListener("click", () => { lastClick = Date.now(); });
+
+  window.addEventListener("scroll", function () {
+    if (Date.now() - lastClick < 600) return; // ignore scroll if just clicked
+    if (window.innerWidth <= 991 && navbarCollapse.classList.contains("show")) {
+      getCollapseInstance().hide();
+      navbarToggler.classList.add("collapsed");
+      navbarToggler.setAttribute("aria-expanded", "false");
+    }
+  });
+
+  // Reset on resize
+  window.addEventListener("resize", function () {
+    if (window.innerWidth > 991 && navbarCollapse.classList.contains("show")) {
+      getCollapseInstance().hide();
+      navbarToggler.classList.add("collapsed");
+      navbarToggler.setAttribute("aria-expanded", "false");
+    }
+  });
+});
+</script>
 
   <!-- <div id="batBeacon873032795321" style="width: 0px; height: 0px; display: none; visibility: hidden;">
     <img id="batBeacon283452202521" width="0" height="0" alt="" src="https://bat.bing.com/action/0?ti=97030454&amp;tm=gtm002&amp;Ver=2&amp;mid=39035635-7fab-45e8-80d9-0938be2a1c92&amp;bo=1&amp;sid=333b9710976511f0bdebf3fcbff55f86&amp;vid=d78a953093f711f099a13bfca231e22b&amp;vids=0&amp;msclkid=N&amp;uach=pv%3D15.0.0&amp;pi=918639831&amp;lg=en-IN&amp;sw=1366&amp;sh=768&amp;sc=24&amp;tl=Danube%20Timez%20At%20Dubai%20Silicon%20Oasis&amp;p=https%3A%2F%2Ftimez-dubai.com%2Fdanube%2F&amp;r=&amp;lt=4153&amp;evt=pageLoad&amp;sv=2&amp;cdb=AQAQ&amp;rn=242140" style="width: 0px; height: 0px; display: none; visibility: hidden;">
