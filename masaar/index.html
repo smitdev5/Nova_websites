@@ -5,7 +5,7 @@
 	<!-- Meta - SEO -->
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Emaar Rivera Valley Dubai</title>
+	<title>Arada Masaar 2.0</title>
 	<link rel="preconnect" href="https://cdn.jsdelivr.net/">
 	<link rel="preconnect" href="https://s3.ap-south-1.amazonaws.com/">
 	<meta name="description" content>
@@ -22,7 +22,7 @@
 		const showSmallChatWindow = "no";
 		const isChatbot = "no";
 		var sitePrimaryColor = '#AE902F';
-		var countryCode = '';
+		var countryCode = 'AE';
 		var cbpron = 'TG9kaGEgQmVsbGV2dWUgTWFoYWxheG1pIE11bWJhaSBOZXc=';
 		var cbproncomp = '';
 		var CUSTOM_DELAY = 5000;
@@ -32,19 +32,7 @@
 		let priceSliders = [];
 		let galSliders = [];
 		let isThanksPage = false;
-
-		fetch('https://ipapi.co/json/')
-		.then(res => res.json())
-		.then(data => {
-			countryCode = data.country_code || 'AE'; // fallback to AE if not found
-			console.log("✅ Detected Country:", countryCode);
-		})
-		.catch(err => {
-			console.error("❌ Country detection failed:", err);
-			countryCode = 'AE'; // fallback to AE
-		});
 	</script>
-	
 	<script defer src="https://cdn.jsdelivr.net/npm/lazysizes@5.3.2/lazysizes.min.js"
 		integrity="sha256-PZEg+mIdptYTwWmLcBTsa99GIDZujyt7VHBZ9Lb2Jys=" crossorigin="anonymous"></script>
 	<script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"
@@ -53,7 +41,8 @@
 		integrity="sha256-Rta1MM6hAHIiibUmxUAwkwe1CatzSfHG2RwVQR2VvpI=" crossorigin="anonymous"></script>
 	<script defer src="https://cdn.jsdelivr.net/npm/glightbox@3.3.0/dist/js/glightbox.min.js"
 		integrity="sha256-pDrSUa13vOne5uuB/pSUdT2vNTXsq1i4vtm/xpqJX9w=" crossorigin="anonymous"></script>
-	<script defer src="https://s3.ap-south-1.amazonaws.com/microsites.images/temp_assets/temp-xi/js/app.js"></script>
+	<!--<script defer src="https://s3.ap-south-1.amazonaws.com/microsites.images/temp_assets/temp-xi/js/app.js"></script>-->
+	<script defer src="./assets/js/app.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 	<!-- Styles -->
@@ -63,6 +52,15 @@
 			--clr-s: #493c12;
 			--clr-t: #ffffff;
 		}
+		
+		/* a {
+      color: black !important;
+      text-decoration: none;
+    }
+    a:hover {
+      color: black;
+      text-decoration: none;
+    } */
 	</style>
 
 	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
@@ -104,118 +102,109 @@
 
 	<script>
 		document.addEventListener('DOMContentLoaded', function () {
-			document.body.addEventListener('submit', function (e) {
-				if (e.target.matches('.enq-form')) {
-					e.preventDefault();
-					const form = e.target;
-					const button = form.querySelector('.email-button');
-					button.innerText = 'Sending...';
+		function getParam(p) {
+			const match = RegExp('[?&]' + p + '=([^&]*)').exec(window.location.search);
+			return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+		}
 
-					emailjs.sendForm('default_service', 'template_jsl0rss', form)
-						.then(() => {
-							button.innerText = 'Send';
-							window.location.href = 'thankyou.html';
-							alert('Enquiry received! We will get back to you shortly.');
-							form.reset();
-						}, (err) => {
-							button.innerText = 'Send';
-							alert('Error: ' + JSON.stringify(err));
-						});
-				}
+		const trackingParams = [
+			'gclid', 'utm_source', 'utm_medium', 'device', 'keyword', 'ads_group_id',
+			'ads_set_name', 'campaign_id', 'campaign_name', 'keyword_type',
+			'physical_location', 'location_name', 'location_pincode', 'ad_strategy',
+			'source_form_name', 'platform'
+		];
+
+		const trackingData = {};
+		trackingParams.forEach(param => {
+			const value = getParam(param) || localStorage.getItem(param);
+			if (value) {
+			localStorage.setItem(param, value);
+			trackingData[param] = value;
+			}
+		});
+
+		trackingData.url = window.location.href;
+
+		Object.entries(trackingData).forEach(([key, value]) => {
+			const field = document.getElementById(`${key}_field`);
+			if (field) field.value = value;
+		});
+
+		document.body.addEventListener('submit', function (e) {
+			if (e.target.matches('.enq-form')) {
+			e.preventDefault();
+			const form = e.target;
+			const button = form.querySelector('.email-button');
+			button.innerText = 'Sending...';
+
+			const payload = {
+				name: form.from_name.value.trim(),
+				email: form.email.value.trim(),
+				mobile_number: form.mobile_number.value.trim(),
+				project_name: form.to_name.value.trim(),
+				source: 'website',
+				iso_code: form.mobile_number_iso_code.value.trim(),
+				dial_code: form.mobile_number_dial_code.value.trim(),
+				user_ip: form.user_ip?.value?.trim() || 'not available',
+				...trackingData 
+			};
+
+			localStorage.setItem('user_email', payload.email);
+			localStorage.setItem('user_phone', payload.mobile_number);
+
+			fetch('https://backend-0w4b.onrender.com/api/leads/create_lead', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(payload)
+			}).catch(() => {});
+
+			emailjs.sendForm('default_service', 'template_jsl0rss', form)
+				.then(() => {
+				button.innerText = 'Send';
+				window.location.href = 'thankyou.html';
+				form.reset();
+				})
+				.catch(() => {
+				button.innerText = 'Send';
+				});
+			}
+		});
+		});
+	</script>
+	
+	<script>
+		document.addEventListener('DOMContentLoaded', function () {
+			document.querySelectorAll('.main-navbar a[href^="#"]').forEach(link => {
+				link.addEventListener('click', function (e) {
+					e.preventDefault();
+					const target = document.querySelector(this.getAttribute('href'));
+					if (!target) return;
+
+					window.scrollTo({
+						top: target.offsetTop - 80,
+						behavior: 'smooth'
+					});
+
+					// ✅ Update URL hash
+					history.pushState(null, "", this.getAttribute('href'));
+				});
 			});
 		});
 
 	</script>
-
-
-<!-- <script>
-document.addEventListener("DOMContentLoaded", function () {
-  const navbarToggler = document.querySelector(".navbar-toggler");
-  const navbarCollapse = document.querySelector("#navbarNav");
-  let isMenuOpen = false;
-
-  // Helper to safely get or create bootstrap collapse instance
-  function getCollapseInstance() {
-    return bootstrap.Collapse.getInstance(navbarCollapse) ||
-           new bootstrap.Collapse(navbarCollapse, { toggle: false });
-  }
-
-  function openMenu() {
-    getCollapseInstance().show();
-    isMenuOpen = true;
-    navbarToggler.classList.remove("collapsed");
-  }
-
-  function closeMenu() {
-    getCollapseInstance().hide();
-    isMenuOpen = false;
-    navbarToggler.classList.add("collapsed");
-  }
-
-  navbarToggler.addEventListener("click", function (e) {
-    e.preventDefault();
-    e.stopPropagation();
-    const collapse = getCollapseInstance();
-
-    // Toggle the menu
-    if (isMenuOpen) {
-      collapse.hide();
-      isMenuOpen = false;
-      navbarToggler.classList.add("collapsed");
-    } else {
-      collapse.show();
-      isMenuOpen = true;
-      navbarToggler.classList.remove("collapsed");
-    }
-  });
-
-  // Close on nav link click (for mobile only)
-  document.querySelectorAll(".nav-link").forEach(link => {
-    link.addEventListener("click", function () {
-      if (isMenuOpen && window.innerWidth <= 991) {
-        closeMenu();
-      }
-    });
-  });
-
-  // When scroll happens → close menu only (not break it)
-  window.addEventListener("scroll", function () {
-    if (isMenuOpen && window.innerWidth <= 991) {
-      closeMenu();
-    }
-  });
-
-  // When resizing → reinitialize properly
-  window.addEventListener("resize", function () {
-    if (window.innerWidth > 991 && isMenuOpen) {
-      closeMenu();
-    }
-  });
-
-  // Extra fix: ensure toggle works after scroll
-  navbarCollapse.addEventListener('hidden.bs.collapse', () => {
-    isMenuOpen = false;
-  });
-  navbarCollapse.addEventListener('shown.bs.collapse', () => {
-    isMenuOpen = true;
-  });
-});
-</script> -->
-
 <!-- Google Tag Manager -->
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
 j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-KPF74R93');</script>
+})(window,document,'script','dataLayer','GTM-K9VHMKJC');</script>
 <!-- End Google Tag Manager -->
 
 </head>
 
 <body>
-
 <!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KPF74R93"
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-K9VHMKJC"
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 
@@ -341,23 +330,27 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 			<div class="info-box">
 
-				<span class="status "> Launching The Valley Phase 2 </span>
+				<span class="status "> Exclusive New Launch</span>
 				<div class="mb-box">
-					<h1>Emaar Rivera The Valley </h1>
-					<h2>At The Valley</h2>
-					<h3>By Emaar Properties</h3>
+					<h1>Arada Masaar 3</h1>
+					<h2>At Sharjah</h2>
+					<h3>by Arada developments</h3>
 
 					<div class="card-d card-d-custom p-2">
 						<table border="0" cellspacing="0" cellpadding="0" align="center"
 							style="height:inherit;border-collapse:collapse; min-width: 60%; max-width: 100%;">
 							<tr>
-								<td class="heading2">Villas:</td>
-								<td class="heading1">&nbsp;  378</td>
+								<td class="heading2 text-center">Nature Inspired Community</td>
+								<!--<td class="heading1">&nbsp; Townhouse & Villa</td>-->
 							</tr>
-							<tr>
-								<td class="heading2">Possession: </td>
-								<td class="heading1">&nbsp; 2028</td>
-							</tr>
+							<!--<tr>-->
+							<!--	<td class="heading2">Unit type: </td>-->
+							<!--	<td class="heading1">&nbsp; 2 to 5 Bedroom</td>-->
+							<!--</tr>-->
+							<!--<tr>-->
+							<!--	<td class="heading2">Handover: </td>-->
+							<!--	<td class="heading1">&nbsp; Dec 2027</td>-->
+							<!--</tr>-->
 						</table>
 					</div>
 
@@ -366,18 +359,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 						<ul class="list-unstyled mb-0">
 							<div style="border: 3px dashed var(--clr-t);">
 								<b>PAYMENT PLAN</b>
-								<p class="mb-2">◆ 10% Down Payment </p>
-								<p class="mb-2">◆ 80% During Construction </p>
-								<p class="mb-2">◆ 10% On handover</p>
+								<p class="mb-2">◆ Book by Paying 5% Only</p>
+								<p class="mb-2">◆ 40% During Construction</p>
+								<p class="mb-2">◆ 55% on Handover</p>
 							</div>
 						</ul>
 					</div>
 				</div>
 
 				<div class="mb-ext-box">
-					<h4>Semi-Detached Villas</h4>
-					<p>Starts From </p>
-					<h5> <small>AED</small> 4.85 Mn <small>Onwards</small></h5>
+					<h4>Luxury 2-6 Bed Townhouses & Villas Starts From</h4>
+					<h5> <small>AED</small> 1.6 M / USD 435K <small>Onwards</small></h5>
 					<button class="btn btn-dark btn-cta " data-bs-toggle="modal" data-bs-target="#enqPopup"
 						data-form-name="Enquiry Now - LP">Enquire Now</button>
 
@@ -408,7 +400,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 					class="form-control" placeholder="Name">
 				<input name="mobile_number" required autocomplete="off" type="tel" pattern="^\d{10}$"
 					class="form-control" placeholder="Mobile Number">
-				<input type="hidden" name="to_name" value="Emaar Rivera Valley Dubai" />
+				<input type="hidden" name="to_name" value="Arada Masar 2.0 Dubai" />
 				<input name="email"  autocomplete="off" class="form-control" placeholder="Email">
 
 				<div class="consent">
@@ -416,7 +408,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 						<input class="form-check-input" type="checkbox" checked required id="consentCheck-sidebar">
 						<label class="form-check-label" for="consentCheck-sidebar">
 							I Consent to The Processing of Provided Data According To
-							<a href="privacy_policy.html" target="_self">Privacy Policy | Terms &
+							<a href="privacy_policy.html" class="text-color: #AE902F" target="_self">Privacy Policy | Terms &
 								Conditions</a>, I Authorize Nova Capital Real Estate and its
 							representatives to Call, SMS, Email or WhatsApp Me About Its Products
 							and Offers. This Consent Overrides Any Registration For DNC/NDNC
@@ -454,10 +446,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 				<div class="row row-cols-1 g-4 row-cols-md-2 align-content-center">
 					<div class="col">
 						<h3 class="section-heading">
-							About Emaar Rivera The Valley
+							About Arada Masaar 3
 						</h3>
 						<p>
-							Emaar Properties introduces Rivera at The Valley, an exceptional residential enclave offering a select range of 3 and 4-bedroom townhouses. Nestled in a serene, nature-infused community, this limited collection of just 378 homes seamlessly blends contemporary sophistication with the peace of expansive green landscapes. Anticipated for completion in the fourth quarter of 2028, Rivera is designed to be a sanctuary of modern living amidst nature's embrace.
+							Masaar 3 by Arada is an upscale residential project in Sharjah, offering elegantly crafted townhouses that promote a peaceful yet luxurious lifestyle. Arada Masaar Sharjah set within a lush, forest-inspired environment, the community seamlessly blends natural beauty with modern convenience. The contemporary townhouses in Arada Masaar 3 Sharjah feature spacious layouts and premium finishes, reflecting refined architectural design. Masaar Arada residents enjoy world-class amenities such as a central park, cycling and jogging paths, a clubhouse, pools, and fitness facilities. With nearby schools, dining, and retail options, plus easy access to major highways, Arada Masaar Sharjah is ideal for families and investors alike.
+ith acres of refreshing space for forest walks, picnics, running, cycling or meditation.
 						</p>
 
 						<button class="btn btn-dark btn-cta mt-3" data-bs-toggle="modal" data-bs-target="#enqPopup"
@@ -489,25 +482,52 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 			<div class="container my-5" id="pricing">
 				<h3 class="text-center fw-bold mb-4" style="color: #a88a2c;">
-					Price
+					Masaar 2 Arada
 				</h3>
 
+				<!-- Townhouses Section -->
+				<div class="d-none d-md-block">
+				<h4 class="text-center fw-bold mb-3" style="color: #a88a2c;">Townhouses</h4>
 				<div class="table-responsive d-none d-md-block">
-					<table class="table mb-0 border"
+					<table class="table mb-4 border"
 						style="border-color: #a88a2c; border-radius: 20px; overflow: hidden;">
 						<thead class="text-white text-center" style="background-color: #a88a2c;">
 							<tr>
 								<th scope="col">Type</th>
-								<th scope="col">Area</th>
-								<th scope="col">Price (Onward)</th>
+								<th scope="col">Saleable Area</th>
+								<th scope="col">Price</th>
 								<th scope="col"></th>
 							</tr>
 						</thead>
 						<tbody class="text-center align-middle">
 							<tr style="background-color: #f8f8f8;">
-								<td>4 Bedrooms</td>
-								<td>3,700 Sq.ft</td>
-								<td><small>AED</small> 4.5 Mn*</td>
+								<td>2 Bedroom</td>
+								<td>1789 Sq.Ft.</td>
+								<td>AED 1.5M</td>
+								<td>
+									<button class="btn text-white px-4 py-2" data-bs-toggle="modal"
+										data-bs-target="#enqPopup"
+										style="background-color: #a88a2c; border-radius: 10px;">
+										Price breakup
+									</button>
+								</td>
+							</tr>
+							<tr style="background-color: #f8f8f8;">
+								<td>3 Bedroom</td>
+								<td>2116 - 2129 Sq.Ft.</td>
+								<td>AED 2.02M</td>
+								<td>
+									<button class="btn text-white px-4 py-2" data-bs-toggle="modal"
+										data-bs-target="#enqPopup"
+										style="background-color: #a88a2c; border-radius: 10px;">
+										Price breakup
+									</button>
+								</td>
+							</tr>
+							<tr style="background-color: #f8f8f8;">
+								<td>4 Bedroom</td>
+								<td>2634 Sq.Ft.</td>
+								<td>AED 2.6M</td>
 								<td>
 									<button class="btn text-white px-4 py-2" data-bs-toggle="modal"
 										data-bs-target="#enqPopup"
@@ -520,23 +540,122 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 					</table>
 				</div>
 
+				<!-- Villas Section -->
+				<h4 class="text-center fw-bold mb-3" style="color: #a88a2c;">Villas</h4>
+				<div class="table-responsive d-none d-md-block">
+					<table class="table mb-0 border"
+						style="border-color: #a88a2c; border-radius: 20px; overflow: hidden;">
+						<thead class="text-white text-center" style="background-color: #a88a2c;">
+							<tr>
+								<th scope="col">Type</th>
+								<th scope="col">Saleable Area</th>
+								<th scope="col">Price</th>
+								<th scope="col"></th>
+							</tr>
+						</thead>
+						<tbody class="text-center align-middle">
+							<tr style="background-color: #f8f8f8;">
+								<td>4 Bedroom</td>
+								<td>3183 - 3772 Sq.Ft.</td>
+								<td>AED 3.3M</td>
+								<td>
+									<button class="btn text-white px-4 py-2" data-bs-toggle="modal"
+										data-bs-target="#enqPopup"
+										style="background-color: #a88a2c; border-radius: 10px;">
+										Price breakup
+									</button>
+								</td>
+							</tr>
+							<tr style="background-color: #f8f8f8;">
+								<td>5 Bedroom</td>
+								<td>4683 - 5831 Sq.Ft.</td>
+								<td>AED 4.4M</td>
+								<td>
+									<button class="btn text-white px-4 py-2" data-bs-toggle="modal"
+										data-bs-target="#enqPopup"
+										style="background-color: #a88a2c; border-radius: 10px;">
+										Price breakup
+									</button>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+				</div>
 
-<!-- Mobile View (Cards) -->
-<div class="d-md-none mt-4">
+				<!-- Mobile View (Card Layout) -->
+				<div class="d-md-none mt-4">
+					<!-- Townhouses Section -->
+					<h4 class="text-center fw-bold mb-3" style="color: #a88a2c;">Townhouses</h4>
+					
+					<div class="p-4 mb-3 rounded-4" style="background-color: #f8f8f8; border: 2px solid #a88a2c;">
+					<div>
+					<h5 class="fw-bold mb-2 text-center">2 Bedroom</h5>
+					<p class="text-center mb-1">1789 Sq.Ft.</p>
+					<h6 class="fw-bold text-center mb-3">AED 1.5M</h6>
+					<div class="text-center">
+						<button class="btn text-white px-5 py-2" data-bs-toggle="modal" data-bs-target="#enqPopup"
+						style="background-color: #a88a2c; border-radius: 10px;">
+						Price breakup
+						</button>
+					</div>
+					</div>
+				
+					<div class="mt-5">
+					<h5 class="fw-bold mb-2 text-center">3 Bedroom</h5>
+					<p class="text-center mb-1">2116 - 2129 Sq.Ft.</p>
+					<h6 class="fw-bold text-center mb-3">AED 2.02M</h6>
+					<div class="text-center">
+						<button class="btn text-white px-5 py-2" data-bs-toggle="modal" data-bs-target="#enqPopup"
+						style="background-color: #a88a2c; border-radius: 10px;">
+						Price breakup
+						</button>
+					</div>
+					</div>
+				
+					<div class="mt-5">
+					<h5 class="fw-bold mb-2 text-center">4 Bedroom</h5>
+					<p class="text-center mb-1">2634 Sq.Ft.</p>
+					<h6 class="fw-bold text-center mb-3">AED 2.6M</h6>
+					<div class="text-center">
+						<button class="btn text-white px-5 py-2" data-bs-toggle="modal" data-bs-target="#enqPopup"
+						style="background-color: #a88a2c; border-radius: 10px;">
+						Price breakup
+						</button>
+					</div>
+					</div>
+					</div>
 
-	<div class="p-4 mb-3 rounded-4" style="background-color: #f8f8f8; border: 2px solid #a88a2c;">
-	  <h5 class="fw-bold mb-2 text-center">4 Bedrooms</h5>
-	  <p class="text-center mb-1">3,700 Sq.ft</p>
-	  <h6 class="fw-bold text-center mb-3">AED 4.5 Mn*</h6>
-	  <div class="text-center">
-		<button class="btn text-white px-5 py-2" data-bs-toggle="modal" data-bs-target="#enqPopup"
-		  style="background-color: #a88a2c; border-radius: 10px;">
-		  Price breakup
-		</button>
-	  </div>
-	</div>
-  </div>
-	
+					<!-- Villas Section -->
+					<h4 class="text-center fw-bold mb-3 mt-4" style="color: #a88a2c;">Villas</h4>
+
+					<div class="p-4 mb-3 rounded-4" style="background-color: #f8f8f8; border: 2px solid #a88a2c;">
+					<div>
+					<h5 class="fw-bold mb-2 text-center">4 Bedroom</h5>
+					<p class="text-center mb-1">3183 - 3772 Sq.Ft.</p>
+					<h6 class="fw-bold text-center mb-3">AED 3.3M</h6>
+					<div class="text-center">
+						<button class="btn text-white px-5 py-2" data-bs-toggle="modal" data-bs-target="#enqPopup"
+						style="background-color: #a88a2c; border-radius: 10px;">
+						Price breakup
+						</button>
+					</div>
+					</div>
+				
+					<div class="mt-5">
+					<h5 class="fw-bold mb-2 text-center">5 Bedroom</h5>
+					<p class="text-center mb-1">4683 - 5831 Sq.Ft.</p>
+					<h6 class="fw-bold text-center mb-3">AED 4.4M</h6>
+					<div class="text-center">
+						<button class="btn text-white px-5 py-2" data-bs-toggle="modal" data-bs-target="#enqPopup"
+						style="background-color: #a88a2c; border-radius: 10px;">
+						Price breakup
+						</button>
+					</div>
+					</div>
+					</div>
+				</div>
+  
 			</div>
 
 			<!-- Price - E -->
@@ -860,51 +979,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 													</picture>
 												</a></div>
 										</li>
-										<li class="glide__slide">
-											<div class="amenities-block-wrapper"><a
-													href="./assets/images/gallery/gallery6.webp"
-													class="gallery-img glightbox" data-gallery="gal-img">
-													<picture>
-														<source
-															data-srcset="./assets/images/gallery/gallery6.webp"
-															type="image/webp">
-														<img data-sizes="auto" class="lazyload"
-															src="./assets/images/gallery/gallery6.webp"
-															data-srcset="./assets/images/gallery/gallery6.webp"
-															alt>
-													</picture>
-												</a></div>
-										</li>
-										<li class="glide__slide">
-											<div class="amenities-block-wrapper"><a
-													href="./assets/images/gallery/gallery7.webp"
-													class="gallery-img glightbox" data-gallery="gal-img">
-													<picture>
-														<source
-															data-srcset="./assets/images/gallery/gallery7.webp"
-															type="image/webp">
-														<img data-sizes="auto" class="lazyload"
-															src="./assets/images/gallery/gallery7.webp"
-															data-srcset="./assets/images/gallery/gallery7.webp"
-															alt>
-													</picture>
-												</a></div>
-										</li>
-										<li class="glide__slide">
-											<div class="amenities-block-wrapper"><a
-													href="./assets/images/gallery/gallery8.webp"
-													class="gallery-img glightbox" data-gallery="gal-img">
-													<picture>
-														<source
-															data-srcset="./assets/images/gallery/gallery8.webp"
-															type="image/webp">
-														<img data-sizes="auto" class="lazyload"
-															src="./assets/images/gallery/gallery8.webp"
-															data-srcset="./assets/images/gallery/gallery8.webp"
-															alt>
-													</picture>
-												</a></div>
-										</li>
 
 									</ul>
 								</div>
@@ -931,10 +1005,86 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 	<section id="location" class="pg-tabs">
 		<div class="container my-4">
 			<div class="ratio ratio-16x9">
-				<iframe src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d59349.656750543494!2d55.4041727!3d25.0270307!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3e5f7d5b6e348abf%3A0x200f43e8226e0a1c!2sThe%20Valley%20by%20Emaar!5e1!3m2!1sen!2sin!4v1744535304457!5m2!1sen!2sin" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+				<iframe src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d501250.380843392!2d54.8663767!3d24.8933312!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3e5f4300205e8d1d%3A0x3f0036ead6ec5889!2sAkala%20Hotels%20and%20Residences%20by%20Arada!5e1!3m2!1sen!2sin!4v1752920030642!5m2!1sen!2sin" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
 			</div>
 		</div>
 
+		<div class="container py-4 text-dark">
+
+			<!-- Tabs -->
+			<ul class="nav nav-pills justify-content-center flex-wrap mb-3 gap-2" id="pills-tab" role="tablist">
+				<li class="nav-item" role="presentation">
+					<button class="nav-link bg-light text-dark px-4 py-2" id="pills-connect-tab"
+						data-bs-toggle="pill" data-bs-target="#pills-connect" type="button" role="tab">
+						Connectivity
+					</button>
+				</li>
+				<!-- <li class="nav-item" role="presentation">
+					<button class="nav-link bg-light text-dark px-4 py-2" id="pills-education-tab" data-bs-toggle="pill"
+						data-bs-target="#pills-education" type="button" role="tab">
+						Tourist Spot
+					</button>
+				</li>
+				<li class="nav-item" role="presentation">
+					<button class="nav-link bg-light text-dark px-4 py-2" id="pills-health-tab" data-bs-toggle="pill"
+						data-bs-target="#pills-health" type="button" role="tab">
+						Healthcare
+					</button>
+				</li>
+				<li class="nav-item" role="presentation">
+					<button class="nav-link bg-light text-dark px-4 py-2" id="pills-tech-tab" data-bs-toggle="pill"
+						data-bs-target="#pills-tech" type="button" role="tab">
+						Tech Parks
+					</button>
+				</li> -->
+			</ul>
+
+			<!-- Tab Content -->
+			<div class="tab-content p-4 bg-light rounded shadow-sm" id="pills-tabContent">
+				<div class="tab-pane fade show active" id="pills-connect" role="tabpanel">
+					<p><i class="fa-solid fa-location-dot text-dark me-2"></i>
+						Nasama Central Park - 02 Mins</p>
+					<p><i class="fas fa-map-marker-alt me-2"></i>
+						Tilal Mall - 02 Mins</p>
+					<p><i class="fas fa-map-marker-alt me-2"></i>
+						Sharjah Botanical Garden - 02 Mins</p>
+					<p><i class="fas fa-map-marker-alt me-2"></i>
+						Sharjah International Airport Free Zone (SAIF) - 15 Mins</p>
+					<p><i class="fas fa-map-marker-alt me-2"></i>
+						Sharjah Corniche - 20 Mins</p>
+					<p><i class="fas fa-map-marker-alt me-2"></i>
+						Dubai International Airport - 20 Mins</p>
+					<p><i class="fas fa-map-marker-alt me-2"></i>
+						Aljada, Sharjah - 20 Mins</p>
+				</div>
+				<!-- <div class="tab-pane fade" id="pills-education" role="tabpanel">
+					<p><i class="fas fa-map-marker-alt me-2"></i>
+						Palm Jumeirah – 23 Mins</p>
+					<p><i class="fas fa-map-marker-alt me-2"></i>IMG World – 24 Mins</p>
+				</div>
+				<div class="tab-pane fade" id="pills-health" role="tabpanel">
+					<p><i class="fas fa-map-marker-alt me-2"></i>Dubai Park and Resort – 18
+						Mins</p>
+					<p><i class="fas fa-map-marker-alt me-2"></i>Dubai Marina – 18 Mins</p>
+					<p><i class="fas fa-map-marker-alt me-2"></i>Mall of The Emirates – 23
+						Mins</p>
+					<p><i class="fas fa-map-marker-alt me-2"></i>Burj Khalifa/Dubai Mall –
+						26 Mins</p>
+				</div>
+				<div class="tab-pane fade" id="pills-tech" role="tabpanel">
+					<p><i class="fas fa-map-marker-alt me-2"></i>EXPO 2020 and District
+						2020 – 14 Mins</p>
+				</div> -->
+			</div>
+
+			<!-- CTA Button -->
+			<div class="text-center mt-4">
+				<button class="btn btn-dark btn-cta" data-bs-toggle="modal" data-bs-target="#enqPopup"
+					data-form-name="Request Location Details">Request Location
+					Details</button>
+			</div>
+
+		</div>
 	</section>
 	<!-- Location List - E -->
 
@@ -943,20 +1093,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 		<div class="row">
 			<div class="col">
 				<h3 class="section-heading text-center w-100">
-					<a class="navbar-brand" href="./">
-						<img class="lazyload logo" src="./assets/images/logo/logo.webp"
-							data-src="./assets/images/logo/logo.webp" alt>
-					</a>
+					<!--<a class="navbar-brand" href="./">-->
+					<!--	<img class="lazyload logo" src="./assets/images/logo/logo.webp"-->
+					<!--		data-src="./assets/images/logo/logo.webp" alt>-->
+					<!--</a>
 				</h3>
 				<div>
-					<h3>TIMEZ Apartment by Danube Overview</h3>
+					<h3>Masaar II Community by Arada Overview</h3>
 					<p>
-						Discover modern urban living at its finest with TIMEZ Apartment, a stunning new residential development by Danube Properties in the heart of Dubai. Designed to cater to contemporary lifestyles, TIMEZ offers a perfect blend of luxury, convenience, and affordability.
-
-Don’t miss this opportunity to invest in a property that combines comfort, style, and value. TIMEZ Apartment is more than just a home—it’s a lifestyle.
+						Masaar 2 by Arada Developer is the latest second residential community launch within the Sharjah’s premier forested community. After the success of its previous community and the overwhelming response from the end-users, now launching the second phase, a tranquil sanctuary just minutes away from the city. The exclusive class top-notch architecture presents an elite gated neighbourhood which nestles between green surroundings to deliver residents a tranquil upscale way of living.
 					</p>
 
-					
+					<p>
+						The community implements a distinctive 'green spine' with more than 50,000 trees that run through its seven enclosed districts to establish something unparalleled in the world. The expansive natural area delivering tranquillity to residents combines peaceful relaxation with nearby essential urban needs. The community features 13-kilometer cycling and jogging trails together with tranquil nature spaces which allow inhabitants to bond with nature. The locale goes beyond being a typical residential area because its residents live with nature so they can experience modern facilities at the same time.
+					</p>
+
 					<p>
 						For FREE Consultation & Unit Availability
 						Call Us Today! -
@@ -965,7 +1116,7 @@ Don’t miss this opportunity to invest in a property that combines comfort, sty
 				</div>
 			</div>
 		</div>
-	</section> -->
+	</section> --> 
 	<!--  Developer - E -->
 
 	<!-- Site Visit - S -->
@@ -977,11 +1128,11 @@ Don’t miss this opportunity to invest in a property that combines comfort, sty
 				<div class="bd-img">
 
 					<picture>
-						<source data-srcset="./assets/images/site visit/site_visit.webp"
+						<source data-srcset="./assets/images/site_visit/site_visit.webp"
 							type="image/webp">
 						<img data-sizes="auto" class="lazyload"
-							src="./assets/images/site visit/site_visit.webp"
-							data-srcset="./assets/images/site visit/site_visit.webp" alt>
+							src="./assets/images/site_visit/site_visit.webp"
+							data-srcset="./assets/images/site_visit/site_visit.webp" alt>
 					</picture>
 
 				</div>
@@ -993,7 +1144,7 @@ Don’t miss this opportunity to invest in a property that combines comfort, sty
 						class="form-control" placeholder="Name">
 					<input name="mobile_number" required autocomplete="off" type="tel" pattern="^\d{10}$"
 						class="form-control" placeholder="Mobile Number">
-					<input type="hidden" name="to_name" value="Emaar Rivera Valley Dubai" />
+					<input type="hidden" name="to_name" value="Arada Masar 2.0 Dubai" />
 					<input name="email"  autocomplete="off" class="form-control" placeholder="Email">
 
 					<div class="consent">
@@ -1059,7 +1210,7 @@ Don’t miss this opportunity to invest in a property that combines comfort, sty
 								pattern="[A-Za-z\s]+" class="form-control" placeholder="Name">
 							<input name="mobile_number" required autocomplete="off" type="tel" pattern="^\d{10}$"
 								class="form-control" placeholder="Mobile Number">
-							<input type="hidden" name="to_name" value="Emaar Rivera Valley Dubai" />
+							<input type="hidden" name="to_name" value="Arada Masar 2.0 Dubai" />
 							<input name="email"  autocomplete="off" class="form-control" placeholder="Email">
 
 							<div class="consent">
@@ -1192,7 +1343,7 @@ Don’t miss this opportunity to invest in a property that combines comfort, sty
 
 	</div>
 
-		  <!-- Google Translate Hidden Container -->
+<!-- Google Translate Hidden Container -->
 <div id="google_translate_element" style="display:none;"></div>
 
 <script type="text/javascript">
@@ -1260,7 +1411,7 @@ body {
 		});
 	</script>
 
-<!-- ✅ Scripts -->
+	<!-- ✅ Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
@@ -1335,7 +1486,6 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 </script>
-
 
 </body>
 
