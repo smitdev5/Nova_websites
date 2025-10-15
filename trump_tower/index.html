@@ -32,6 +32,17 @@
 		let priceSliders = [];
 		let galSliders = [];
 		let isThanksPage = false;
+
+		fetch('https://ipapi.co/json/')
+		.then(res => res.json())
+		.then(data => {
+			countryCode = data.country_code || 'AE'; // fallback to AE if not found
+			console.log("✅ Detected Country:", countryCode);
+		})
+		.catch(err => {
+			console.error("❌ Country detection failed:", err);
+			countryCode = 'AE'; // fallback to AE
+		});
 	</script>
 	<script defer src="https://cdn.jsdelivr.net/npm/lazysizes@5.3.2/lazysizes.min.js"
 		integrity="sha256-PZEg+mIdptYTwWmLcBTsa99GIDZujyt7VHBZ9Lb2Jys=" crossorigin="anonymous"></script>
@@ -102,25 +113,82 @@
 	</script>
 
 	<script>
-		document.addEventListener('DOMContentLoaded', function () {
-			document.body.addEventListener('submit', function (e) {
-				if (e.target.matches('.enq-form')) {
-					e.preventDefault();
-					const form = e.target;
-					const button = form.querySelector('.email-button');
-					button.innerText = 'Sending...';
+	document.addEventListener('DOMContentLoaded', function () {
+	  document.body.addEventListener('submit', function (e) {
+		if (e.target.matches('.enq-form')) {
+		  e.preventDefault();
+		  const form = e.target;
+		  const button = form.querySelector('.email-button');
+		  button.innerText = 'Sending...';
+  
+		  // Prepare payload for backend API
+		  const payload = {
+			name: form.from_name.value.trim(),
+			email: form.email.value.trim(),
+			mobile_number: form.mobile_number.value.trim(),
+			project_name: form.to_name.value.trim(),
+			source: 'website', 
+			iso_code: form.mobile_number_iso_code.value.trim(),
+			dial_code: form.mobile_number_dial_code.value.trim(),
+			user_ip: form.user_ip?.value?.trim() || 'not available'
+		  };
 
-					emailjs.sendForm('default_service', 'template_jsl0rss', form)
-						.then(() => {
-							button.innerText = 'Send';
-							window.location.href = 'thankyou.html';
-							// alert('Enquiry received! We will get back to you shortly.');
-							form.reset();
-						}, (err) => {
-							button.innerText = 'Send';
-							alert('Error: ' + JSON.stringify(err));
-						});
-				}
+		//   console.log('payload: ' + JSON.stringify(payload));	
+		  
+		  // Call backend API — result is non-blocking
+		  fetch('https://backend-0w4b.onrender.com/api/leads/create_lead', {
+			method: 'POST',
+			headers: {
+			  'Content-Type': 'application/json'
+			},
+			body: JSON.stringify(payload)
+		  })
+		  .then(response => {
+			if (!response.ok) {
+			 // console.warn('Backend API error:', response.status);
+			} else {
+			  return response.json().then(data => {
+				// console.log('Backend API success:', data);
+			  });
+			}
+		  })
+		  .catch(error => {
+// 			console.warn('Backend API failed:', error);
+		  });
+  
+		//   Proceed to send the email regardless of backend result
+		  emailjs.sendForm('default_service', 'template_jsl0rss', form)
+			.then(() => {
+			  button.innerText = 'Send';
+			  window.location.href = 'thankyou.html'; // Redirect to Thank You page
+			  form.reset();
+			})
+			.catch((err) => {
+			  button.innerText = 'Send';
+			 // alert('Email failed: ' + JSON.stringify(err));
+			});
+		}
+	  });
+	});
+</script>
+
+
+	<script>
+		document.addEventListener('DOMContentLoaded', function () {
+			document.querySelectorAll('.main-navbar a[href^="#"]').forEach(link => {
+				link.addEventListener('click', function (e) {
+					e.preventDefault();
+					const target = document.querySelector(this.getAttribute('href'));
+					if (!target) return;
+
+					window.scrollTo({
+						top: target.offsetTop - 80,
+						behavior: 'smooth'
+					});
+
+					// ✅ Update URL hash
+					history.pushState(null, "", this.getAttribute('href'));
+				});
 			});
 		});
 
