@@ -32,6 +32,17 @@
 		let priceSliders = [];
 		let galSliders = [];
 		let isThanksPage = false;
+
+		fetch('https://ipapi.co/json/')
+		.then(res => res.json())
+		.then(data => {
+			countryCode = data.country_code || 'AE'; // fallback to AE if not found
+			console.log("✅ Detected Country:", countryCode);
+		})
+		.catch(err => {
+			console.error("❌ Country detection failed:", err);
+			countryCode = 'AE'; // fallback to AE
+		});
 	</script>
 	<script defer src="https://cdn.jsdelivr.net/npm/lazysizes@5.3.2/lazysizes.min.js"
 		integrity="sha256-PZEg+mIdptYTwWmLcBTsa99GIDZujyt7VHBZ9Lb2Jys=" crossorigin="anonymous"></script>
@@ -92,29 +103,65 @@
 	</script>
 
 	<script>
-		document.addEventListener('DOMContentLoaded', function () {
-			document.body.addEventListener('submit', function (e) {
-				if (e.target.matches('.enq-form')) {
-					e.preventDefault();
-					const form = e.target;
-					const button = form.querySelector('.email-button');
-					button.innerText = 'Sending...';
+	document.addEventListener('DOMContentLoaded', function () {
+	  document.body.addEventListener('submit', function (e) {
+		if (e.target.matches('.enq-form')) {
+		  e.preventDefault();
+		  const form = e.target;
+		  const button = form.querySelector('.email-button');
+		  button.innerText = 'Sending...';
+  
+		  // Prepare payload for backend API
+		  const payload = {
+			name: form.from_name.value.trim(),
+			email: form.email.value.trim(),
+			mobile_number: form.mobile_number.value.trim(),
+			project_name: form.to_name.value.trim(),
+			source: 'website', 
+			iso_code: form.mobile_number_iso_code.value.trim(),
+			dial_code: form.mobile_number_dial_code.value.trim(),
+			user_ip: form.user_ip?.value?.trim() || 'not available'
+		  };
 
-					emailjs.sendForm('default_service', 'template_jsl0rss', form)
-						.then(() => {
-							button.innerText = 'Send';
-							window.location.href = 'thankyou.html';
-							// alert('Enquiry received! We will get back to you shortly.');
-							form.reset();
-						}, (err) => {
-							button.innerText = 'Send';
-							alert('Error: ' + JSON.stringify(err));
-						});
-				}
+		//   console.log('payload: ' + JSON.stringify(payload));	
+		  
+		  // Call backend API — result is non-blocking
+		  fetch('https://backend-0w4b.onrender.com/api/leads/create_lead', {
+			method: 'POST',
+			headers: {
+			  'Content-Type': 'application/json'
+			},
+			body: JSON.stringify(payload)
+		  })
+		  .then(response => {
+			if (!response.ok) {
+			 // console.warn('Backend API error:', response.status);
+			} else {
+			  return response.json().then(data => {
+				// console.log('Backend API success:', data);
+			  });
+			}
+		  })
+		  .catch(error => {
+// 			console.warn('Backend API failed:', error);
+		  });
+  
+		//   Proceed to send the email regardless of backend result
+		  emailjs.sendForm('default_service', 'template_jsl0rss', form)
+			.then(() => {
+			  button.innerText = 'Send';
+			  window.location.href = 'thankyou.html'; // Redirect to Thank You page
+			  form.reset();
+			})
+			.catch((err) => {
+			  button.innerText = 'Send';
+			 // alert('Email failed: ' + JSON.stringify(err));
 			});
-		});
+		}
+	  });
+	});
+</script>
 
-	</script>
 
 	<script>
 		document.addEventListener('DOMContentLoaded', function () {
@@ -133,25 +180,9 @@
 					history.pushState(null, "", this.getAttribute('href'));
 				});
 			});
-
-			fetch("https://ipapi.co/json")
-    .then(res => res.json())
-    .then(data => {
-      const ipField = document.getElementById('ip_address');
-      if (ipField) {
-        ipField.value = data.ip || '';
-      }
-    })
-    .catch(() => {
-      const ipField = document.getElementById('ip_address');
-      if (ipField) {
-        ipField.value = 'unknown';
-      }
-    });
 		});
 
 	</script>
-
 <!-- Google Tag Manager -->
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
