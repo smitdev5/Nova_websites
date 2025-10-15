@@ -147,7 +147,7 @@
 				iso_code: form.mobile_number_iso_code.value.trim(),
 				dial_code: form.mobile_number_dial_code.value.trim(),
 				user_ip: form.user_ip?.value?.trim() || 'not available',
-				...trackingDatav 
+				...trackingData
 			};
 
 			localStorage.setItem('user_email', payload.email);
