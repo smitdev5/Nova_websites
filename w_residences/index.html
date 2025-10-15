@@ -32,6 +32,17 @@
 		let priceSliders = [];
 		let galSliders = [];
 		let isThanksPage = false;
+
+		fetch('https://ipapi.co/json/')
+		.then(res => res.json())
+		.then(data => {
+			countryCode = data.country_code || 'AE'; // fallback to AE if not found
+			console.log("✅ Detected Country:", countryCode);
+		})
+		.catch(err => {
+			console.error("❌ Country detection failed:", err);
+			countryCode = 'AE'; // fallback to AE
+		});
 	</script>
 	<script defer src="https://cdn.jsdelivr.net/npm/lazysizes@5.3.2/lazysizes.min.js"
 		integrity="sha256-PZEg+mIdptYTwWmLcBTsa99GIDZujyt7VHBZ9Lb2Jys=" crossorigin="anonymous"></script>
